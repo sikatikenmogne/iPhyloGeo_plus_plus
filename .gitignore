@@ -6,3 +6,4 @@ scripts/output.csv
 scripts/results
 iPhyloGeo_env/*
 img/resources_rc.py
+.venv
