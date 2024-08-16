@@ -4,3 +4,5 @@ scripts/aPhyloGeo++_env/*
 scripts/output.csv
 .venv
 scripts/results
+iPhyloGeo_env/*
+img/resources_rc.py
