@@ -50,9 +50,12 @@ from utils import (  # noqa: F401  # Import the compiled resource module for res
 from utils.geneticParamsDialog import ParamDialog
 from utils.help import UiHowToUse
 from utils.PreferencesDialog import PreferencesDialog  # Import PreferencesDialog
-from utils.settings import Settings
+from utils.settings import Params2, Settings
 
-Params.load_from_file("./scripts/utils/params.yaml")
+try:
+    Params.load_from_file("./scripts/utils/params.yaml")
+except FileNotFoundError:
+    Params.validate_and_set_params(Params2.PARAMETER_KEYS)
 
 
 class Worker(QObject):
@@ -76,7 +79,12 @@ class Worker(QObject):
 
         # Step 3: Generate genetic trees
         self.progress.emit(2)
-        geneticTrees = utils.geneticPipeline(alignments.msa)  # noqa: N806
+
+        try:
+            geneticTrees = utils.geneticPipeline(alignments.msa)  # noqa: N806
+        except Exception as e:
+            raise Exception("Genetic pipeline Failed: consider to change the tree type in the settings") from e
+
         trees = GeneticTrees(trees_dict=geneticTrees, format="newick")
 
         # Step 4: Preparing results
@@ -162,13 +170,18 @@ def update_yaml_param(params, file_path, property_name, new_value):
     params.update_from_dict({property_name: new_value})
 
     # 1. Load existing YAML data
-    with open(file_path, "r") as yaml_file:
-        data = yaml.safe_load(yaml_file)  # Use safe_load for security
+    try:
+        with open(file_path, "r") as yaml_file:
+            data = yaml.safe_load(yaml_file)  # Use safe_load for security
+    except FileNotFoundError:
+        data = Params2.PARAMETER_KEYS
 
     # 2. Update the specified property
     if property_name in data:
         data[property_name] = new_value
     # 3. Write the updated data back to the file
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Ensure the file exists
+
     with open(file_path, "w") as yaml_file:
         yaml.dump(data, yaml_file, default_flow_style=None, Dumper=MyDumper, sort_keys=False)
 
